@@ -12,19 +12,34 @@ from functools import wraps
 
 app = Flask(__name__)
 app.secret_key = "library_secret_key_2024"
+import os
+import shutil
 
-DATABASE = "database.db"
+# On Vercel / Serverless environments, the root directory is read-only at runtime.
+# We redirect to /tmp/database.db where SQLite can read and write freely.
+if os.environ.get("VERCEL") or os.environ.get("AWS_LAMBDA_FUNCTION_NAME") or os.path.exists("/var/task"):
+    DATABASE = "/tmp/database.db"
+    if not os.path.exists(DATABASE):
+        src_db = os.path.join(os.path.dirname(__file__), "database.db")
+        if os.path.exists(src_db):
+            try:
+                shutil.copyfile(src_db, DATABASE)
+            except Exception as e:
+                print(f"[WARN] Could not copy database to /tmp: {e}")
+else:
+    DATABASE = "database.db"
 
 # ─────────────────────────────────────────────
 # DATABASE HELPERS
 # ─────────────────────────────────────────────
 
 def get_db():
-    """Open a new database connection."""
+    """Open a new database connection, ensuring tables exist if needed."""
     conn = sqlite3.connect(DATABASE)
     conn.row_factory = sqlite3.Row   # Return rows as dict-like objects
     conn.execute("PRAGMA foreign_keys = ON")
     return conn
+
 
 
 def init_db():
@@ -663,12 +678,18 @@ def clear_history():
 
 
 # ─────────────────────────────────────────────
-# ENTRY POINT
+# MODULE INITIALIZATION (For Vercel & WSGI)
 # ─────────────────────────────────────────────
-
-if __name__ == "__main__":
+try:
     init_db()
     migrate_db()
+except Exception as _e:
+    print(f"[WARN] Module DB initialization check: {_e}")
+
+# ─────────────────────────────────────────────
+# ENTRY POINT (Local Development)
+# ─────────────────────────────────────────────
+if __name__ == "__main__":
     print("[OK] Library system ready -> http://127.0.0.1:5000")
     print("    Default login: admin / admin123")
     app.run(debug=True)
