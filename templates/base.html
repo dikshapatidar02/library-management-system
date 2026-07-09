@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Bookmark — SaaS Library System{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <script>
+    (function() {
+      var t = localStorage.getItem('theme') || 'light';
+      document.documentElement.setAttribute('data-theme', t);
+    })();
+  </script>
+</head>
+<body class="{% if session.get('logged_in') %}has-sidebar{% endif %}">
+
+{% if session.get('logged_in') %}
+<!-- ── SaaS Fixed Sidebar Navigation ── -->
+<aside class="app-sidebar" id="appSidebar">
+  <div class="sidebar-header">
+    <a class="sidebar-brand" href="{{ url_for('index') }}">
+      <span class="brand-icon">📚</span>
+      <span class="brand-text"><span>Book</span>mark</span>
+    </a>
+    <button type="button" class="sidebar-collapse-btn" id="sidebarToggle" aria-label="Toggle Sidebar" title="Toggle Sidebar">
+      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+    </button>
+  </div>
+
+  <div class="sidebar-user">
+    <div class="user-avatar">👤</div>
+    <div class="user-info">
+      <div class="user-name">{{ session.username }}</div>
+      <div class="user-role">Administrator</div>
+    </div>
+  </div>
+
+  <nav class="sidebar-nav">
+    <!-- Dashboard -->
+    <a href="{{ url_for('index') }}" class="sidebar-link {% if request.endpoint == 'index' %}active{% endif %}">
+      <span class="link-icon">📊</span>
+      <span class="link-text">Dashboard</span>
+    </a>
+
+    <!-- Recommendations & Submenu -->
+    <div class="sidebar-group {% if request.endpoint == 'recommendations' %}open{% endif %}" id="recGroup">
+      <a href="{{ url_for('recommendations') if 'recommendations' in url_for.__self__._rules_by_endpoint else '/recommendations' }}" class="sidebar-link {% if request.endpoint == 'recommendations' %}active{% endif %}" id="recLink">
+        <span class="link-icon">📚</span>
+        <span class="link-text">Recommendations</span>
+        <span class="submenu-arrow">▼</span>
+      </a>
+      <div class="sidebar-submenu" id="recSubmenu">
+        <a href="/recommendations?category=Fiction" class="submenu-link {% if request.args.get('category') == 'Fiction' %}active{% endif %}">Fiction</a>
+        <a href="/recommendations?category=Non-Fiction" class="submenu-link {% if request.args.get('category') == 'Non-Fiction' %}active{% endif %}">Non-Fiction</a>
+        <a href="/recommendations?category=Authors" class="submenu-link {% if request.args.get('category') == 'Authors' %}active{% endif %}">Authors</a>
+        <a href="/recommendations?category=Religious" class="submenu-link {% if request.args.get('category') == 'Religious' %}active{% endif %}">Religious</a>
+        <a href="/recommendations?category=Kids" class="submenu-link {% if request.args.get('category') == 'Kids' %}active{% endif %}">Kids</a>
+        <a href="/recommendations?category=Novels" class="submenu-link {% if request.args.get('category') == 'Novels' %}active{% endif %}">Novels</a>
+      </div>
+    </div>
+
+    <!-- Issue Book -->
+    <a href="{{ url_for('issue_book') }}" class="sidebar-link {% if request.endpoint == 'issue_book' %}active{% endif %}">
+      <span class="link-icon">📖</span>
+      <span class="link-text">Issue Book</span>
+    </a>
+
+    <!-- Return Book -->
+    <a href="{{ url_for('return_book') }}" class="sidebar-link {% if request.endpoint == 'return_book' %}active{% endif %}">
+      <span class="link-icon">📥</span>
+      <span class="link-text">Return Book</span>
+    </a>
+
+    <!-- Borrow History -->
+    <a href="{{ url_for('view_transactions') }}" class="sidebar-link {% if request.endpoint == 'view_transactions' %}active{% endif %}">
+      <span class="link-icon">📜</span>
+      <span class="link-text">Borrow History</span>
+    </a>
+
+    <!-- Settings -->
+    <button type="button" class="sidebar-link sidebar-btn" id="openSettingsBtn">
+      <span class="link-icon">⚙️</span>
+      <span class="link-text">Settings</span>
+    </button>
+  </nav>
+
+  <div class="sidebar-footer">
+    <a href="{{ url_for('logout') }}" class="sidebar-link logout-link">
+      <span class="link-icon">🚪</span>
+      <span class="link-text">Logout</span>
+    </a>
+  </div>
+</aside>
+
+<!-- Mobile Top Bar for toggling sidebar on small screens -->
+<header class="mobile-topbar">
+  <button type="button" class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Open Menu">☰</button>
+  <a class="mobile-brand" href="{{ url_for('index') }}">📚 <span>Book</span>mark</a>
+  <span class="mobile-user">👤 {{ session.username }}</span>
+</header>
+{% endif %}
+
+<!-- ── Main Content Area ── -->
+<div class="app-main-container {% if not session.get('logged_in') %}guest-layout{% endif %}">
+  <!-- Flash Messages -->
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <div class="flash-container">
+      {% for category, message in messages %}
+        <div class="flash flash-{{ category }}">{{ message }}</div>
+      {% endfor %}
+    </div>
+    {% endif %}
+  {% endwith %}
+
+  <main class="app-content">
+    {% block content %}{% endblock %}
+  </main>
+
+  {% if session.get('logged_in') %}
+  <footer class="app-footer">
+    &copy; 2024 Bookmark · Library Management System · All rights reserved.
+  </footer>
+  {% endif %}
+</div>
+
+<!-- Settings Modal -->
+{% if session.get('logged_in') %}
+<div class="saas-modal-backdrop" id="settingsModal" style="display:none;">
+  <div class="saas-modal-card">
+    <div class="saas-modal-header">
+      <h3>⚙️ Application Settings</h3>
+      <button type="button" class="close-modal-btn" id="closeSettingsBtn">&times;</button>
+    </div>
+    <div class="saas-modal-body">
+      <div class="setting-item">
+        <div class="setting-desc">
+          <h4>Dark Theme Mode</h4>
+          <p>Switch between warm editorial cream and high-contrast charcoal dark mode.</p>
+        </div>
+        <button id="modalThemeToggle" class="btn btn-primary btn-sm">Toggle Theme 🌙</button>
+      </div>
+      <div class="setting-item">
+        <div class="setting-desc">
+          <h4>Compact Sidebar</h4>
+          <p>Toggle sidebar collapsed state for more workspace area.</p>
+        </div>
+        <button id="modalSidebarToggle" class="btn btn-secondary btn-sm">Toggle Sidebar</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<script>
+(function() {
+  // ── Sidebar Toggle Behavior ──
+  var sidebar = document.getElementById('appSidebar');
+  var toggleBtn = document.getElementById('sidebarToggle');
+  var mobileBtn = document.getElementById('mobileMenuBtn');
+  var body = document.body;
+
+  var isCollapsed = localStorage.getItem('sidebar_collapsed') === 'true';
+  if (isCollapsed && sidebar) {
+    sidebar.classList.add('collapsed');
+    body.classList.add('sidebar-collapsed');
+  }
+
+  function toggleSidebar() {
+    if (!sidebar) return;
+    sidebar.classList.toggle('collapsed');
+    body.classList.toggle('sidebar-collapsed');
+    var collapsedState = sidebar.classList.contains('collapsed');
+    localStorage.setItem('sidebar_collapsed', collapsedState);
+  }
+
+  if (toggleBtn) toggleBtn.addEventListener('click', toggleSidebar);
+  if (mobileBtn) {
+    mobileBtn.addEventListener('click', function() {
+      if (sidebar) sidebar.classList.toggle('mobile-open');
+    });
+  }
+
+  // ── Submenu Toggle ──
+  var recGroup = document.getElementById('recGroup');
+  var recLink = document.getElementById('recLink');
+  if (recGroup && recLink) {
+    recLink.addEventListener('click', function(e) {
+      // If clicking the arrow or group on desktop when not already on recommendations
+      var sub = document.getElementById('recSubmenu');
+      if (sub && !recGroup.classList.contains('open')) {
+        recGroup.classList.add('open');
+      }
+    });
+  }
+
+  // ── Theme Switcher ──
+  var modalThemeBtn = document.getElementById('modalThemeToggle');
+  function updateThemeLabel(t) {
+    if (modalThemeBtn) modalThemeBtn.textContent = t === 'dark' ? 'Switch to Light ☀️' : 'Switch to Dark 🌙';
+  }
+  var curTheme = document.documentElement.getAttribute('data-theme') || 'light';
+  updateThemeLabel(curTheme);
+
+  if (modalThemeBtn) {
+    modalThemeBtn.addEventListener('click', function() {
+      var newT = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', newT);
+      localStorage.setItem('theme', newT);
+      updateThemeLabel(newT);
+    });
+  }
+
+  // ── Settings Modal Toggles ──
+  var openSettingsBtn = document.getElementById('openSettingsBtn');
+  var closeSettingsBtn = document.getElementById('closeSettingsBtn');
+  var settingsModal = document.getElementById('settingsModal');
+  var modalSidebarToggle = document.getElementById('modalSidebarToggle');
+
+  if (openSettingsBtn && settingsModal) {
+    openSettingsBtn.addEventListener('click', function() {
+      settingsModal.style.display = 'flex';
+    });
+  }
+  if (closeSettingsBtn && settingsModal) {
+    closeSettingsBtn.addEventListener('click', function() {
+      settingsModal.style.display = 'none';
+    });
+  }
+  if (settingsModal) {
+    settingsModal.addEventListener('click', function(e) {
+      if (e.target === settingsModal) settingsModal.style.display = 'none';
+    });
+  }
+  if (modalSidebarToggle) {
+    modalSidebarToggle.addEventListener('click', toggleSidebar);
+  }
+})();
+</script>
+</body>
+</html>

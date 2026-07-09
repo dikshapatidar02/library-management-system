@@ -1,0 +1,235 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — Bookmark SaaS{% endblock %}
+
+{% block content %}
+<div class="page-wrapper">
+
+  <!-- ── Modern Hero Banner ── -->
+  <div class="hero-banner-section" style="position: relative; border-radius: 20px; overflow: hidden; margin-bottom: 2.5rem; background: linear-gradient(135deg, rgba(26, 18, 8, 0.88), rgba(44, 34, 20, 0.92)), url('https://images.unsplash.com/photo-1507842229356-51c6150fe5a3?auto=format&fit=crop&w=1600&q=80') center/cover no-repeat; box-shadow: 0 16px 40px rgba(0,0,0,0.18); border: 1.5px solid rgba(212, 160, 23, 0.3);">
+    <div style="display: flex; align-items: center; justify-content: space-between; padding: 3.5rem 3.5rem; gap: 2.5rem; flex-wrap: wrap; position: relative; z-index: 2;">
+      
+      <!-- Left Content -->
+      <div style="flex: 1; min-width: 300px; max-width: 620px;">
+        <div style="display: inline-flex; align-items: center; gap: 0.5rem; background: rgba(212, 160, 23, 0.22); color: #f6edd8; padding: 0.4rem 0.9rem; border-radius: 50px; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 1.25rem; border: 1px solid rgba(212, 160, 23, 0.45);">
+          <span>⭐</span> State-of-the-art Digital Library
+        </div>
+        <h1 style="font-family: var(--font-serif); font-size: 3.1rem; font-weight: 700; color: #ffffff; line-height: 1.18; margin-bottom: 1.25rem; text-shadow: 0 2px 8px rgba(0,0,0,0.4);">
+          Discover Your Next <span style="color: var(--brass-lt);">Great Read</span>
+        </h1>
+        <p style="color: rgba(255,255,255,0.88); font-size: 1.08rem; line-height: 1.65; margin-bottom: 2rem; font-weight: 400;">
+          Browse thousands of books across fiction, non-fiction, academic, religious, children's literature, novels, and more. Search, borrow, manage, and explore a modern digital library designed to make discovering knowledge simple, organized, and enjoyable.
+        </p>
+        <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+          <a href="{{ url_for('view_books') }}" class="btn btn-primary" style="padding: 0.85rem 1.8rem; font-size: 1.02rem; border-radius: 50px; font-weight: 700; box-shadow: 0 6px 18px rgba(184, 134, 11, 0.4);">
+            Browse Books →
+          </a>
+          <a href="{{ url_for('register_member') }}" class="btn" style="padding: 0.85rem 1.8rem; font-size: 1.02rem; border-radius: 50px; font-weight: 700; background: rgba(255, 255, 255, 0.12); color: #ffffff; border: 1.5px solid rgba(255, 255, 255, 0.35); backdrop-filter: blur(8px); transition: all 0.2s;">
+            Register Member
+          </a>
+        </div>
+      </div>
+
+      <!-- Right Hero Floating Illustration / Image -->
+      <div style="flex: 1; min-width: 280px; display: flex; justify-content: center; align-items: center;">
+        <div class="hero-floating-card" style="position: relative; width: 100%; max-width: 380px; border-radius: 16px; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,0.5), 0 0 0 1.5px rgba(212, 160, 23, 0.4); background: #1a1208; transform-style: preserve-3d; animation: heroFloat 5s ease-in-out infinite;">
+          <img src="https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?auto=format&fit=crop&w=800&q=80" alt="Modern Library Interior & Stacked Books" style="width: 100%; height: 280px; object-fit: cover; display: block; opacity: 0.95;">
+          <div style="position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(0deg, rgba(26,18,8,0.95) 10%, rgba(26,18,8,0)); padding: 1.5rem 1.25rem 1rem; color: #fff;">
+            <div style="font-family: var(--font-serif); font-size: 1.1rem; font-weight: 700; color: var(--brass-lt);">100+ Curated Volumes</div>
+            <div style="font-size: 0.82rem; color: rgba(255,255,255,0.8);">Live circulation tracking &amp; instant borrowing</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── 4 Feature Cards Grid ── -->
+  <div class="hero-features-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.25rem; margin-bottom: 3.5rem;">
+    <div class="hero-feature-card" style="background: var(--ivory-mid); border: 1.5px solid var(--ivory-dark); border-radius: 14px; padding: 1.5rem; transition: transform 0.25s, box-shadow 0.25s; box-shadow: 0 4px 14px rgba(0,0,0,0.03);">
+      <div style="font-size: 2rem; margin-bottom: 0.75rem;">📚</div>
+      <h3 style="font-family: var(--font-serif); font-size: 1.15rem; font-weight: 700; color: var(--ink); margin-bottom: 0.4rem;">Extensive Collection</h3>
+      <p style="font-size: 0.88rem; color: var(--ink-soft); line-height: 1.5;">Access books across multiple genres and categories.</p>
+    </div>
+
+    <div class="hero-feature-card" style="background: var(--ivory-mid); border: 1.5px solid var(--ivory-dark); border-radius: 14px; padding: 1.5rem; transition: transform 0.25s, box-shadow 0.25s; box-shadow: 0 4px 14px rgba(0,0,0,0.03);">
+      <div style="font-size: 2rem; margin-bottom: 0.75rem;">🔍</div>
+      <h3 style="font-family: var(--font-serif); font-size: 1.15rem; font-weight: 700; color: var(--ink); margin-bottom: 0.4rem;">Smart Search</h3>
+      <p style="font-size: 0.88rem; color: var(--ink-soft); line-height: 1.5;">Quickly find books by title, author, ISBN, or category.</p>
+    </div>
+
+    <div class="hero-feature-card" style="background: var(--ivory-mid); border: 1.5px solid var(--ivory-dark); border-radius: 14px; padding: 1.5rem; transition: transform 0.25s, box-shadow 0.25s; box-shadow: 0 4px 14px rgba(0,0,0,0.03);">
+      <div style="font-size: 2rem; margin-bottom: 0.75rem;">📖</div>
+      <h3 style="font-family: var(--font-serif); font-size: 1.15rem; font-weight: 700; color: var(--ink); margin-bottom: 0.4rem;">Easy Borrowing</h3>
+      <p style="font-size: 0.88rem; color: var(--ink-soft); line-height: 1.5;">Issue and return books with a seamless digital workflow.</p>
+    </div>
+
+    <div class="hero-feature-card" style="background: var(--ivory-mid); border: 1.5px solid var(--ivory-dark); border-radius: 14px; padding: 1.5rem; transition: transform 0.25s, box-shadow 0.25s; box-shadow: 0 4px 14px rgba(0,0,0,0.03);">
+      <div style="font-size: 2rem; margin-bottom: 0.75rem;">⭐</div>
+      <h3 style="font-family: var(--font-serif); font-size: 1.15rem; font-weight: 700; color: var(--ink); margin-bottom: 0.4rem;">Personalized Recommendations</h3>
+      <p style="font-size: 0.88rem; color: var(--ink-soft); line-height: 1.5;">Discover books based on your interests and reading preferences.</p>
+    </div>
+  </div>
+
+  <!-- ── Dashboard Header ── -->
+  <div class="page-header" style="margin-bottom: 2rem;">
+    <h1 style="font-family: var(--font-serif); font-size: 2.2rem; font-weight: 700; color: var(--ink);">Overview Dashboard</h1>
+    <p style="color: var(--ink-soft); font-size: 0.95rem;">Manage library operations, monitor circulation, and register members.</p>
+  </div>
+
+  <!-- ── Top Section: 2 Primary Action Cards ── -->
+  <div class="action-cards-grid">
+    <a href="{{ url_for('register_member') }}" class="action-card">
+      <div class="action-card-icon">📖</div>
+      <div class="action-card-text">
+        <h3>Register Member</h3>
+        <p>Onboard new students and patrons into the library membership catalogue.</p>
+      </div>
+      <div class="action-card-arrow">→</div>
+    </a>
+
+    <a href="{{ url_for('add_book') }}" class="action-card">
+      <div class="action-card-icon">➕</div>
+      <div class="action-card-text">
+        <h3>Add Book</h3>
+        <p>Register new inventory, ISBN titles, and additional physical copies.</p>
+      </div>
+      <div class="action-card-arrow">→</div>
+    </a>
+  </div>
+
+  <!-- ── Middle Section: 4 Attractive Stat Cards ── -->
+  <div class="dashboard-stats-grid">
+    <div class="saas-stat-card">
+      <div class="saas-stat-header">
+        <span class="saas-stat-label">Total Books</span>
+        <span class="saas-stat-badge">📚</span>
+      </div>
+      <div class="saas-stat-value">{{ total_books }}</div>
+      <div style="font-size: 0.78rem; color: var(--sage); margin-top: 0.4rem; font-weight: 600;">↑ 100% Catalogue</div>
+    </div>
+
+    <div class="saas-stat-card">
+      <div class="saas-stat-header">
+        <span class="saas-stat-label">Available Books</span>
+        <span class="saas-stat-badge" style="background: rgba(90, 184, 139, 0.15); color: var(--sage);">📗</span>
+      </div>
+      <div class="saas-stat-value">{{ total_books - issued_books }}</div>
+      <div style="font-size: 0.78rem; color: var(--sage); margin-top: 0.4rem; font-weight: 600;">Ready for checkout</div>
+    </div>
+
+    <div class="saas-stat-card">
+      <div class="saas-stat-header">
+        <span class="saas-stat-label">Issued Books</span>
+        <span class="saas-stat-badge" style="background: rgba(77, 166, 255, 0.15); color: #4da6ff;">📖</span>
+      </div>
+      <div class="saas-stat-value">{{ issued_books }}</div>
+      <div style="font-size: 0.78rem; color: var(--ink-soft); margin-top: 0.4rem;">Currently in circulation</div>
+    </div>
+
+    <div class="saas-stat-card">
+      <div class="saas-stat-header">
+        <span class="saas-stat-label">Total Members</span>
+        <span class="saas-stat-badge" style="background: rgba(212, 160, 23, 0.15); color: var(--brass);">👥</span>
+      </div>
+      <div class="saas-stat-value">{{ total_members }}</div>
+      <div style="font-size: 0.78rem; color: var(--brass); margin-top: 0.4rem; font-weight: 600;">Active patron cards</div>
+    </div>
+  </div>
+
+  <!-- ── Bottom Section: Dashboard Panels (No Long Tables) ── -->
+  <div class="dashboard-panels-grid" style="grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));">
+    
+    <!-- Left Column: Recently Added Books -->
+    <div class="dashboard-panel">
+      <div class="panel-header">
+        <h3><span>📗</span> Recently Added Books</h3>
+        <a href="{{ url_for('view_books') }}" style="font-size: 0.82rem; color: var(--brass); font-weight: 600; text-decoration: none;">View Catalogue →</a>
+      </div>
+      <div class="panel-list" id="recentBooksList">
+        <div style="padding: 1.5rem; text-align: center; color: var(--ink-soft); font-size: 0.9rem;">
+          Loading latest catalogue arrivals...
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Column: Recent Activity -->
+    <div class="dashboard-panel">
+      <div class="panel-header">
+        <h3><span>🔄</span> Recent Activity</h3>
+        <a href="{{ url_for('view_transactions') }}" style="font-size: 0.82rem; color: var(--brass); font-weight: 600; text-decoration: none;">History →</a>
+      </div>
+      <div class="panel-list">
+        {% if recent %}
+          {% for t in recent %}
+          <div class="panel-item">
+            <div class="panel-item-left">
+              <div class="panel-item-icon">
+                {% if t.status == 'issued' %}📤{% else %}📥{% endif %}
+              </div>
+              <div class="panel-item-info">
+                <h4>{{ t.title }}</h4>
+                <p>Patron: <strong>{{ t.name }}</strong> · Date: {{ t.issue_date }}</p>
+              </div>
+            </div>
+            <div>
+              {% if t.status == 'issued' %}
+                <span class="badge badge-warning" style="font-size: 0.75rem; padding: 0.25rem 0.6rem; border-radius: 6px;">Issued</span>
+              {% else %}
+                <span class="badge badge-success" style="font-size: 0.75rem; padding: 0.25rem 0.6rem; border-radius: 6px;">Returned</span>
+              {% endif %}
+            </div>
+          </div>
+          {% endfor %}
+        {% else %}
+          <div style="padding: 1.5rem; text-align: center; color: var(--ink-soft); font-size: 0.9rem;">
+            No recent circulation activity yet.
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+// Fetch latest books cleanly via API to display attractive Recently Added Books cards
+(function() {
+  fetch('/api/books/search?q=')
+    .then(function(res) { return res.json(); })
+    .then(function(books) {
+      var container = document.getElementById('recentBooksList');
+      if (!container) return;
+      if (!books || books.length === 0) {
+        container.innerHTML = '<div style="padding: 1.5rem; text-align: center; color: var(--ink-soft); font-size: 0.9rem;">No books registered in the catalogue yet.</div>';
+        return;
+      }
+      // Take the last 4 books added
+      var latest = books.slice(-4).reverse();
+      var html = '';
+      for (var i = 0; i < latest.length; i++) {
+        var b = latest[i];
+        var avail = b.quantity > 0;
+        var badgeHtml = avail
+          ? '<span class="badge badge-success" style="font-size: 0.72rem; padding: 0.2rem 0.55rem; border-radius: 4px;">Available: ' + b.quantity + '</span>'
+          : '<span class="badge badge-danger" style="font-size: 0.72rem; padding: 0.2rem 0.55rem; border-radius: 4px;">Out of Stock</span>';
+        html += '<div class="panel-item">' +
+          '<div class="panel-item-left">' +
+            '<div class="panel-item-icon">📕</div>' +
+            '<div class="panel-item-info">' +
+              '<h4>' + b.title + '</h4>' +
+              '<p>By <strong>' + b.author + '</strong></p>' +
+            '</div>' +
+          '</div>' +
+          '<div>' + badgeHtml + '</div>' +
+        '</div>';
+      }
+      container.innerHTML = html;
+    })
+    .catch(function(e) {
+      var container = document.getElementById('recentBooksList');
+      if (container) container.innerHTML = '<div style="padding: 1.5rem; text-align: center; color: var(--ink-soft);">Could not load recent arrivals.</div>';
+    });
+})();
+</script>
+{% endblock %}

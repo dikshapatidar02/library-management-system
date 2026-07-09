@@ -1,0 +1,310 @@
+{% extends "base.html" %}
+{% block title %}Recommendations &amp; Curated Library — Bookmark SaaS{% endblock %}
+
+{% block content %}
+<div class="page-wrapper">
+
+  <!-- ── Header & Category Pills ── -->
+  <div class="rec-header" style="margin-bottom: 2rem;">
+    <div>
+      <h1 style="font-family: var(--font-serif); font-size: 2.2rem; font-weight: 700; color: var(--ink);">Book Recommendations</h1>
+      <p style="color: var(--ink-soft); font-size: 0.95rem;">Curated highlights across our 100+ volume digital library collection.</p>
+    </div>
+
+    <div class="rec-pills" id="categoryPills" style="display: flex; gap: 0.6rem; flex-wrap: wrap; align-items: center;">
+      <button type="button" class="rec-pill active" data-cat="All">All Curated (36 Genres)</button>
+      <button type="button" class="rec-pill" data-cat="Fiction">Fiction</button>
+      <button type="button" class="rec-pill" data-cat="Non-Fiction">Non-Fiction</button>
+      <button type="button" class="rec-pill" data-cat="Novels">Novels</button>
+      <button type="button" class="rec-pill" data-cat="Authors">Authors</button>
+      <button type="button" class="rec-pill" data-cat="Religious">Religious</button>
+      <button type="button" class="rec-pill" data-cat="Kids">Kids</button>
+      <button type="button" class="rec-pill" data-cat="Artificial Intelligence">Artificial Intelligence</button>
+      <button type="button" class="rec-pill" data-cat="Data Science">Data Science</button>
+      <button type="button" class="rec-pill" data-cat="UPSC & Competitive Exams">UPSC &amp; Competitive</button>
+      <button type="button" class="rec-pill" data-cat="Philosophy">Philosophy</button>
+      <button type="button" class="rec-pill" data-cat="Mystery & Thriller">Mystery &amp; Thriller</button>
+      <a href="{{ url_for('view_books') }}" class="btn btn-secondary btn-sm" style="margin-left: auto;">View All Catalogue Grid →</a>
+    </div>
+  </div>
+
+  <!-- ── Book Card Grid ── -->
+  <div class="book-browse-grid" id="bookBrowseGrid">
+    <div style="grid-column: 1/-1; padding: 4rem; text-align: center; color: var(--ink-soft);">
+      Loading recommended books and cover thumbnails...
+    </div>
+  </div>
+
+</div>
+
+<!-- ── View Details Modal ── -->
+<div class="saas-modal-backdrop" id="bookDetailModal" style="display: none;">
+  <div class="saas-modal-card" style="max-width: 650px;">
+    <div class="saas-modal-header">
+      <h3 id="modalTitle">Book Details</h3>
+      <button type="button" class="close-modal-btn" id="closeDetailBtn">&times;</button>
+    </div>
+    <div class="saas-modal-body" style="gap: 1.25rem;">
+      <div style="display: flex; gap: 1.75rem; align-items: flex-start; flex-wrap: wrap;">
+        
+        <!-- Modal Cover -->
+        <div style="width: 160px; height: 235px; border-radius: 10px; overflow: hidden; background: #1a1208; flex-shrink: 0; box-shadow: 0 8px 24px rgba(0,0,0,0.25); position: relative;">
+          <img id="modalCoverImg" src="" alt="Book Cover" style="width: 100%; height: 100%; object-fit: cover;">
+          <div id="modalCoverFallback" style="display: none; width: 100%; height: 100%; flex-direction: column; align-items: center; justify-content: center; padding: 1rem; text-align: center; color: #fff; background: linear-gradient(135deg, #2c2214, #1a1208);">
+            <span style="font-size: 2rem;">📕</span>
+            <span id="modalFallbackText" style="font-size: 0.85rem; font-weight: 700; margin-top: 0.5rem;">Title</span>
+          </div>
+        </div>
+
+        <!-- Modal Info -->
+        <div style="flex: 1; min-width: 240px;">
+          <div style="display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; margin-bottom: 0.6rem;">
+            <span class="book-cat-tag" id="modalCategory">Category</span>
+            <span style="font-size: 0.85rem; font-weight: 700; color: var(--brass);" id="modalRating">★ 4.8 / 5.0</span>
+            <span id="modalAvailabilityBadge"></span>
+          </div>
+          <h3 id="modalBookTitle" style="font-family: var(--font-serif); font-size: 1.5rem; font-weight: 700; color: var(--ink); margin-bottom: 0.25rem;"></h3>
+          <p style="font-size: 1rem; color: var(--brass); font-weight: 600; margin-bottom: 1rem;">by <span id="modalAuthor"></span></p>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; font-size: 0.82rem; color: var(--ink-soft); background: var(--ivory); padding: 0.85rem; border-radius: 8px; border: 1px solid var(--ivory-dark); margin-bottom: 1rem;">
+            <div><strong>ISBN:</strong> <span id="modalIsbn"></span></div>
+            <div><strong>Year:</strong> <span id="modalYear"></span></div>
+            <div><strong>Language:</strong> <span id="modalLanguage"></span></div>
+            <div><strong>Publisher:</strong> <span id="modalPublisher"></span></div>
+            <div><strong>Total Copies:</strong> <span id="modalTotalCopies"></span></div>
+            <div><strong>Location:</strong> <span id="modalShelf" style="color: var(--ink); font-weight: 700;"></span></div>
+          </div>
+
+          <div id="modalDescription" style="font-size: 0.9rem; color: var(--ink); line-height: 1.5; margin-bottom: 1rem;"></div>
+        </div>
+      </div>
+
+      <!-- Modal Footer Actions -->
+      <div style="display: flex; gap: 0.75rem; justify-content: flex-end; align-items: center; border-top: 1px solid var(--ivory-dark); padding-top: 1.25rem;">
+        <button type="button" class="btn btn-secondary" id="modalCloseBtn">Close</button>
+        <a href="#" id="modalIssueBtn" class="btn btn-primary">📖 Issue This Book</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  var dbBooks = [
+    {% for b in books %}
+    {
+      id: {{ b.id }},
+      title: {{ b.title | tojson }},
+      author: {{ b.author | tojson }},
+      quantity: {{ b.quantity }}
+    }{% if not loop.last %},{% endif %}
+    {% endfor %}
+  ];
+
+  var dbTitleMap = {};
+  for (var i = 0; i < dbBooks.length; i++) {
+    var key = dbBooks[i].title.toLowerCase().trim();
+    dbTitleMap[key] = dbBooks[i];
+  }
+
+  var allCatalogBooks = [];
+  var grid = document.getElementById('bookBrowseGrid');
+  var pills = document.querySelectorAll('#categoryPills .rec-pill');
+  var activeCategory = 'All';
+
+  // Check URL param if linked (?category=Fiction)
+  var urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.get('category')) {
+    activeCategory = urlParams.get('category');
+  }
+
+  fetch('/static/catalog_100.json')
+    .then(function(r) { return r.json(); })
+    .then(function(catalog) {
+      for (var j = 0; j < catalog.length; j++) {
+        var item = catalog[j];
+        var match = dbTitleMap[item.title.toLowerCase().trim()];
+        if (match) {
+          item.id = match.id;
+          item.quantity = match.quantity;
+        } else {
+          item.id = null;
+          item.quantity = item.total_copies || 4;
+        }
+        allCatalogBooks.push(item);
+      }
+      setupPills();
+      renderGrid(activeCategory);
+    })
+    .catch(function(err) {
+      console.error("Error loading catalog_100.json in recommendations:", err);
+    });
+
+  function setupPills() {
+    for (var p = 0; p < pills.length; p++) {
+      var pill = pills[p];
+      if (pill.getAttribute('data-cat') === activeCategory) {
+        pill.classList.add('active');
+      } else if (activeCategory !== 'All' && pill.getAttribute('data-cat') === 'All') {
+        pill.classList.remove('active');
+      }
+
+      pill.addEventListener('click', function() {
+        for (var z = 0; z < pills.length; z++) pills[z].classList.remove('active');
+        this.classList.add('active');
+        activeCategory = this.getAttribute('data-cat');
+        renderGrid(activeCategory);
+      });
+    }
+  }
+
+  function matchesCategory(b, cat) {
+    if (cat === 'All') return true;
+    if (b.category === cat) return true;
+    var bc = (b.category || '').toLowerCase();
+    var ct = cat.toLowerCase();
+    if (ct === 'fiction') return bc.indexOf('fiction') !== -1;
+    if (ct === 'non-fiction') return bc.indexOf('non-fiction') !== -1 || bc.indexOf('science') !== -1 || bc.indexOf('technology') !== -1 || bc.indexOf('business') !== -1 || bc.indexOf('psychology') !== -1 || bc.indexOf('self-help') !== -1 || bc.indexOf('medical') !== -1 || bc.indexOf('law') !== -1 || bc.indexOf('upsc') !== -1;
+    if (ct === 'authors') return bc.indexOf('biography') !== -1 || bc.indexOf('autobiography') !== -1 || bc.indexOf('literature') !== -1 || bc.indexOf('poetry') !== -1;
+    if (ct === 'religious') return bc.indexOf('religion') !== -1 || bc.indexOf('spirituality') !== -1 || bc.indexOf('philosophy') !== -1;
+    if (ct === 'kids') return bc.indexOf('children') !== -1 || bc.indexOf('young adult') !== -1 || bc.indexOf('comics') !== -1;
+    if (ct === 'novels') return bc.indexOf('novel') !== -1 || bc.indexOf('romance') !== -1 || bc.indexOf('fantasy') !== -1 || bc.indexOf('mystery') !== -1 || bc.indexOf('adventure') !== -1 || bc.indexOf('horror') !== -1;
+    return bc.indexOf(ct) !== -1;
+  }
+
+  function renderGrid(cat) {
+    if (!grid) return;
+    grid.innerHTML = '';
+    var filtered = allCatalogBooks.filter(function(b) {
+      return matchesCategory(b, cat);
+    });
+
+    if (filtered.length === 0) {
+      grid.innerHTML = '<div style="grid-column: 1/-1; padding: 4rem; text-align: center;">No books found in category: ' + cat + '</div>';
+      return;
+    }
+
+    for (var c = 0; c < filtered.length; c++) {
+      var book = filtered[c];
+      var isAvail = book.quantity > 0;
+      var badgeHtml = isAvail
+        ? '<span class="badge badge-success" style="font-size: 0.73rem; padding: 0.22rem 0.6rem;">Available (' + book.quantity + ')</span>'
+        : '<span class="badge badge-danger" style="font-size: 0.73rem; padding: 0.22rem 0.6rem;">Out of Stock</span>';
+
+      var card = document.createElement('div');
+      card.className = 'book-browse-card';
+      card.style.display = 'flex';
+      card.style.flexDirection = 'column';
+
+      card.innerHTML = 
+        '<div style="height: 230px; overflow: hidden; position: relative; border-bottom: 1px solid var(--ivory-dark); background: #1a1208; display: flex; align-items: center; justify-content: center;">' +
+          '<img src="' + book.cover_url + '" alt="' + book.title + '" ' +
+               'onerror="this.style.display=\'none\'; this.nextElementSibling.style.display=\'flex\';" ' +
+               'style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);">' +
+          '<div style="display: none; width: 100%; height: 100%; flex-direction: column; align-items: center; justify-content: center; padding: 1.25rem; text-align: center; color: #fff; background: linear-gradient(135deg, #2c2214, #1a1208);">' +
+            '<span style="font-size: 2.2rem; margin-bottom: 0.3rem;">📕</span>' +
+            '<span style="font-family: var(--font-serif); font-weight: 700; font-size: 1.05rem; line-height: 1.3;">' + book.title + '</span>' +
+          '</div>' +
+        '</div>' +
+        '<div style="padding: 1.25rem; display: flex; flex-direction: column; justify-content: space-between; flex: 1;">' +
+          '<div>' +
+            '<div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.6rem;">' +
+              '<span class="book-cat-tag">#' + book.category + '</span>' +
+              '<span style="font-size: 0.84rem; font-weight: 700; color: var(--brass);">★ ' + book.rating + '</span>' +
+            '</div>' +
+            '<h3 style="font-family: var(--font-serif); font-size: 1.15rem; font-weight: 700; margin-bottom: 0.2rem; color: var(--ink); line-height: 1.3;">' + book.title + '</h3>' +
+            '<p style="font-size: 0.85rem; color: var(--brass); margin-bottom: 0.75rem; font-weight: 600;">by ' + book.author + '</p>' +
+            '<div style="display: flex; justify-content: space-between; font-size: 0.78rem; color: var(--ink-soft); margin-bottom: 0.85rem; background: var(--ivory); padding: 0.45rem 0.65rem; border-radius: 6px; border: 1px solid var(--ivory-dark);">' +
+              '<span>📅 ' + book.year + '</span>' +
+              '<span>📍 ' + book.shelf + '</span>' +
+            '</div>' +
+            '<div style="margin-bottom: 1.1rem;">' + badgeHtml + '</div>' +
+          '</div>' +
+          '<div style="display: flex; gap: 0.6rem;">' +
+            '<button type="button" class="btn btn-secondary btn-sm view-details-btn" style="flex: 1; text-align: center;">View Details</button>' +
+            '<a href="/issue' + (book.id ? '?book_id=' + book.id : '') + '" class="btn btn-primary btn-sm" style="flex: 1; text-align: center; ' + (isAvail ? '' : 'pointer-events: none; opacity: 0.5;') + '">📖 Issue Book</a>' +
+          '</div>' +
+        '</div>';
+
+      var imgEl = card.querySelector('img');
+      if (imgEl) {
+        card.addEventListener('mouseenter', function() { imgEl.style.transform = 'scale(1.06)'; });
+        card.addEventListener('mouseleave', function() { imgEl.style.transform = 'scale(1.0)'; });
+      }
+
+      (function(itemData) {
+        var vBtn = card.querySelector('.view-details-btn');
+        vBtn.addEventListener('click', function() { openModal(itemData); });
+      })(book);
+
+      grid.appendChild(card);
+    }
+  }
+
+  var modal = document.getElementById('bookDetailModal');
+  var close1 = document.getElementById('closeDetailBtn');
+  var close2 = document.getElementById('modalCloseBtn');
+
+  function openModal(book) {
+    if (!modal) return;
+    document.getElementById('modalTitle').textContent = book.title;
+    document.getElementById('modalBookTitle').textContent = book.title;
+    document.getElementById('modalAuthor').textContent = book.author;
+    document.getElementById('modalCategory').textContent = book.category;
+    document.getElementById('modalRating').textContent = '★ ' + book.rating + ' / 5.0';
+    document.getElementById('modalIsbn').textContent = book.isbn || 'N/A';
+    document.getElementById('modalYear').textContent = book.year || '2024';
+    document.getElementById('modalLanguage').textContent = book.language || 'English';
+    document.getElementById('modalPublisher').textContent = book.publisher || 'Bookmark Press';
+    document.getElementById('modalTotalCopies').textContent = book.total_copies || book.quantity;
+    document.getElementById('modalShelf').textContent = book.shelf || 'Shelf A-01';
+    document.getElementById('modalDescription').textContent = book.description;
+
+    var coverImg = document.getElementById('modalCoverImg');
+    var fallback = document.getElementById('modalCoverFallback');
+    if (coverImg && fallback) {
+      coverImg.style.display = 'block';
+      fallback.style.display = 'none';
+      coverImg.src = book.cover_url;
+      coverImg.onerror = function() {
+        coverImg.style.display = 'none';
+        fallback.style.display = 'flex';
+        document.getElementById('modalFallbackText').textContent = book.title;
+      };
+    }
+
+    var badgeEl = document.getElementById('modalAvailabilityBadge');
+    if (badgeEl) {
+      badgeEl.innerHTML = book.quantity > 0
+        ? '<span class="badge badge-success" style="font-size: 0.78rem;">Available (' + book.quantity + ' copies)</span>'
+        : '<span class="badge badge-danger" style="font-size: 0.78rem;">Out of Stock</span>';
+    }
+
+    var issueBtn = document.getElementById('modalIssueBtn');
+    if (issueBtn) {
+      if (book.id && book.quantity > 0) {
+        issueBtn.href = '/issue?book_id=' + book.id;
+        issueBtn.style.display = 'inline-flex';
+      } else {
+        issueBtn.href = '/issue';
+        issueBtn.style.display = 'inline-flex';
+      }
+    }
+
+    modal.style.display = 'flex';
+  }
+
+  function closeDetailModal() {
+    if (modal) modal.style.display = 'none';
+  }
+
+  if (close1) close1.addEventListener('click', closeDetailModal);
+  if (close2) close2.addEventListener('click', closeDetailModal);
+  if (modal) {
+    modal.addEventListener('click', function(e) {
+      if (e.target === modal) closeDetailModal();
+    });
+  }
+})();
+</script>
+{% endblock %}

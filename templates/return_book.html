@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}Return Book — Bookmark{% endblock %}
+
+{% block content %}
+<div class="page-wrapper">
+
+  <div class="page-header">
+    <h1>Return a Book</h1>
+    <p>Select the transaction to mark as returned. Fines are calculated automatically.</p>
+  </div>
+
+  {% if issued %}
+  <div style="margin-bottom:1.5rem;background:var(--ivory-mid);border:1px solid var(--ivory-dark);border-radius:6px;padding:1rem;font-size:.85rem;color:var(--ink-soft);">
+    📌 <strong>Fine Policy:</strong> Books due after 14 days incur a fine of ₹5 per overdue day.
+  </div>
+
+  <div class="issued-list">
+    {% for item in issued %}
+    <div class="issued-item">
+      <div class="issued-item-info">
+        <div class="issued-item-title">{{ item.title }}</div>
+        <div class="issued-item-meta">
+          👤 {{ item.name }} &nbsp;|&nbsp; 📅 Issued: {{ item.issue_date }}
+          &nbsp;|&nbsp; {{ item.days_held }} day(s) held
+        </div>
+        {% if item.days_held > 14 %}
+        <div style="margin-top:.3rem;display:flex;gap:.5rem;align-items:center;flex-wrap:wrap;">
+          <span class="overdue-tag">Overdue by {{ item.days_held - 14 }} day(s)</span>
+          <span class="fine-note">Fine: ₹{{ (item.days_held - 14) * 5 }}</span>
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- Return form for this transaction -->
+      <form method="POST" action="{{ url_for('return_book') }}"
+            onsubmit="return confirm('Mark this book as returned?');">
+        <input type="hidden" name="transaction_id" value="{{ item.id }}">
+        <button type="submit" class="btn btn-success">📥 Return</button>
+      </form>
+    </div>
+    {% endfor %}
+  </div>
+
+  {% else %}
+  <div class="empty-state">
+    <div class="empty-state-icon">🎉</div>
+    <h3>No books currently issued</h3>
+    <p>All books have been returned. Issue a book to get started.</p>
+    <a href="{{ url_for('issue_book') }}" class="btn btn-info">Issue a Book</a>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}

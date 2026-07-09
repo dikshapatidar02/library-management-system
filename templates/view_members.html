@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block title %}Members — Bookmark{% endblock %}
+
+{% block content %}
+<div class="page-wrapper">
+
+  <div class="page-header">
+    <div class="page-header-row">
+      <div>
+        <h1>Members</h1>
+        <p>All registered library members</p>
+      </div>
+      <a href="{{ url_for('register_member') }}" class="btn btn-primary">+ Register Member</a>
+    </div>
+  </div>
+
+  <!-- ── Search ── -->
+  <form class="search-form" method="GET" action="{{ url_for('view_members') }}" style="margin-bottom:1.5rem;">
+    <input type="text" name="q" value="{{ query }}" placeholder="Search by name or email…">
+    <button type="submit" class="btn btn-primary">Search</button>
+    {% if query %}
+      <a href="{{ url_for('view_members') }}" class="btn btn-secondary">Clear</a>
+    {% endif %}
+  </form>
+
+  {% if members %}
+  <div class="card">
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for m in members %}
+          <tr>
+            <td>{{ m.id }}</td>
+            <td>{{ m.name }}</td>
+            <td>{{ m.email }}</td>
+            <td>
+              <form method="POST" action="{{ url_for('delete_member', member_id=m.id) }}"
+                    class="delete-member-form" data-name="{{ m.name | e }}" style="display:inline;">
+                <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <p style="margin-top:.75rem;font-size:.82rem;color:#888;">{{ members|length }} member(s) found</p>
+
+  {% else %}
+  <div class="empty-state">
+    <div class="empty-state-icon">👥</div>
+    <h3>{% if query %}No results for "{{ query }}"{% else %}No members yet{% endif %}</h3>
+    <p>Register your first library member.</p>
+    <a href="{{ url_for('register_member') }}" class="btn btn-primary">Register Member</a>
+  </div>
+  {% endif %}
+
+</div>
+<script>
+  document.querySelectorAll('.delete-member-form').forEach(function(form) {
+    form.addEventListener('submit', function(e) {
+      var name = form.getAttribute('data-name');
+      if (!confirm('Delete member "' + name + '"? This cannot be undone.')) {
+        e.preventDefault();
+      }
+    });
+  });
+</script>
+{% endblock %}

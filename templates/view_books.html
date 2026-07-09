@@ -1,0 +1,592 @@
+{% extends "base.html" %}
+{% block title %}Interactive Book Catalogue — Bookmark SaaS{% endblock %}
+
+{% block content %}
+<div class="page-wrapper">
+
+  <!-- ── Header ── -->
+  <div class="page-header" style="margin-bottom: 1.75rem;">
+    <div class="page-header-row" style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
+      <div>
+        <h1 style="font-family: var(--font-serif); font-size: 2.2rem; font-weight: 700; color: var(--ink);">Digital Library &amp; Book Catalogue</h1>
+        <p style="color: var(--ink-soft); font-size: 0.95rem;">Explore 100+ sample books across 36 genres with real covers, multi-faceted filtering, and live search.</p>
+      </div>
+      <a href="{{ url_for('add_book') }}" class="btn btn-primary">+ Add New Book</a>
+    </div>
+  </div>
+
+  <!-- ── Advanced Multi-Faceted Control Toolbar ── -->
+  <div class="catalogue-controls-card" style="background: var(--ivory-mid); border: 1.5px solid var(--ivory-dark); border-radius: 14px; padding: 1.5rem; margin-bottom: 2rem; box-shadow: 0 4px 16px rgba(0,0,0,0.04);">
+    
+    <!-- Top Row: Live Search & Sorting -->
+    <div style="display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.25rem; align-items: center;">
+      <div style="flex: 3; min-width: 280px; position: relative;">
+        <span style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); font-size: 1.1rem; opacity: 0.6;">🔍</span>
+        <input type="text" id="searchInput" placeholder="Search across 100+ books by Title, Author, ISBN, or Category..." 
+               style="width: 100%; padding: 0.75rem 1rem 0.75rem 2.6rem; border-radius: 10px; border: 1.5px solid var(--ivory-dark); background: var(--ivory); color: var(--ink); font-size: 0.95rem; font-family: var(--font-sans); outline: none; transition: border-color 0.2s;">
+      </div>
+      
+      <div style="flex: 1; min-width: 200px;">
+        <select id="sortSelect" style="width: 100%; padding: 0.75rem 1rem; border-radius: 10px; border: 1.5px solid var(--ivory-dark); background: var(--ivory); color: var(--ink); font-size: 0.92rem; font-weight: 600; cursor: pointer;">
+          <option value="az">Sort: Title (A–Z)</option>
+          <option value="za">Sort: Title (Z–A)</option>
+          <option value="newest">Sort: Newest (Publication Year)</option>
+          <option value="oldest">Sort: Oldest (Publication Year)</option>
+          <option value="rating">Sort: Highest Rated (★)</option>
+          <option value="popular">Sort: Most Popular (Copies)</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Bottom Row: Multi-Faceted Filters -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 0.85rem; align-items: center;">
+      
+      <!-- Category Filter (36 Categories) -->
+      <div>
+        <label style="display: block; font-size: 0.75rem; font-weight: 700; color: var(--ink-soft); text-transform: uppercase; margin-bottom: 0.35rem;">Category</label>
+        <select id="filterCategory" class="filter-select">
+          <option value="All">All Categories (36)</option>
+          <option value="Fiction">Fiction</option>
+          <option value="Non-Fiction">Non-Fiction</option>
+          <option value="Novels">Novels</option>
+          <option value="Mystery & Thriller">Mystery &amp; Thriller</option>
+          <option value="Romance">Romance</option>
+          <option value="Fantasy">Fantasy</option>
+          <option value="Science Fiction">Science Fiction</option>
+          <option value="Horror">Horror</option>
+          <option value="Adventure">Adventure</option>
+          <option value="Historical Fiction">Historical Fiction</option>
+          <option value="Biography">Biography</option>
+          <option value="Autobiography">Autobiography</option>
+          <option value="Self-Help">Self-Help</option>
+          <option value="Business & Finance">Business &amp; Finance</option>
+          <option value="Psychology">Psychology</option>
+          <option value="Philosophy">Philosophy</option>
+          <option value="Religion & Spirituality">Religion &amp; Spirituality</option>
+          <option value="Science">Science</option>
+          <option value="Technology">Technology</option>
+          <option value="Programming">Programming</option>
+          <option value="Artificial Intelligence">Artificial Intelligence</option>
+          <option value="Data Science">Data Science</option>
+          <option value="Mathematics">Mathematics</option>
+          <option value="Engineering">Engineering</option>
+          <option value="Medical">Medical</option>
+          <option value="Law">Law</option>
+          <option value="UPSC & Competitive Exams">UPSC &amp; Competitive Exams</option>
+          <option value="Children's Books">Children's Books</option>
+          <option value="Young Adult">Young Adult</option>
+          <option value="Comics & Graphic Novels">Comics &amp; Graphic Novels</option>
+          <option value="Poetry">Poetry</option>
+          <option value="Literature">Literature</option>
+          <option value="Health & Fitness">Health &amp; Fitness</option>
+          <option value="Cooking">Cooking</option>
+          <option value="Travel">Travel</option>
+          <option value="Art & Design">Art &amp; Design</option>
+        </select>
+      </div>
+
+      <!-- Author Filter -->
+      <div>
+        <label style="display: block; font-size: 0.75rem; font-weight: 700; color: var(--ink-soft); text-transform: uppercase; margin-bottom: 0.35rem;">Author</label>
+        <select id="filterAuthor" class="filter-select">
+          <option value="All">All Authors</option>
+          <!-- Populated dynamically via JS -->
+        </select>
+      </div>
+
+      <!-- Language Filter -->
+      <div>
+        <label style="display: block; font-size: 0.75rem; font-weight: 700; color: var(--ink-soft); text-transform: uppercase; margin-bottom: 0.35rem;">Language</label>
+        <select id="filterLanguage" class="filter-select">
+          <option value="All">All Languages</option>
+          <option value="English">English</option>
+          <option value="Spanish">Spanish</option>
+          <option value="French">French</option>
+          <option value="German">German</option>
+          <option value="Hindi">Hindi</option>
+        </select>
+      </div>
+
+      <!-- Publication Year Filter -->
+      <div>
+        <label style="display: block; font-size: 0.75rem; font-weight: 700; color: var(--ink-soft); text-transform: uppercase; margin-bottom: 0.35rem;">Publication Year</label>
+        <select id="filterYear" class="filter-select">
+          <option value="All">All Years</option>
+          <option value="before1950">Before 1950</option>
+          <option value="1950-1999">1950 – 1999</option>
+          <option value="2000-2019">2000 – 2019</option>
+          <option value="2020plus">2020 &amp; Newer</option>
+        </select>
+      </div>
+
+      <!-- Availability Filter -->
+      <div>
+        <label style="display: block; font-size: 0.75rem; font-weight: 700; color: var(--ink-soft); text-transform: uppercase; margin-bottom: 0.35rem;">Availability</label>
+        <select id="filterAvailability" class="filter-select">
+          <option value="All">All Status</option>
+          <option value="Available">Available for Issue</option>
+          <option value="Issued">Issued / Out of Stock</option>
+        </select>
+      </div>
+
+      <!-- Rating Filter -->
+      <div>
+        <label style="display: block; font-size: 0.75rem; font-weight: 700; color: var(--ink-soft); text-transform: uppercase; margin-bottom: 0.35rem;">Rating</label>
+        <select id="filterRating" class="filter-select">
+          <option value="All">All Ratings</option>
+          <option value="4.8">★ 4.8+ Top Rated</option>
+          <option value="4.6">★ 4.6+ Excellent</option>
+          <option value="4.4">★ 4.4+ Recommended</option>
+        </select>
+      </div>
+
+      <!-- Reset Filters -->
+      <div style="display: flex; align-items: flex-end;">
+        <button type="button" id="resetFiltersBtn" class="btn btn-secondary" style="width: 100%; height: 38px; padding: 0.45rem; font-size: 0.85rem;">↺ Reset Filters</button>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- ── Results Count & Active Filters Bar ── -->
+  <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+    <div id="resultsSummaryText" style="font-size: 0.95rem; font-weight: 600; color: var(--ink);">Showing all books</div>
+    <div id="activeTagsContainer" style="display: flex; gap: 0.5rem; flex-wrap: wrap;"></div>
+  </div>
+
+  <!-- ── Responsive Book Card Grid (Instead of Tables) ── -->
+  <div class="book-browse-grid" id="bookCardGrid">
+    <div style="grid-column: 1/-1; padding: 4rem; text-align: center; color: var(--ink-soft);">
+      Loading library catalogue and cover thumbnails...
+    </div>
+  </div>
+
+</div>
+
+<!-- ── View Details Modal ── -->
+<div class="saas-modal-backdrop" id="bookDetailModal" style="display: none;">
+  <div class="saas-modal-card" style="max-width: 650px;">
+    <div class="saas-modal-header">
+      <h3 id="modalTitle">Book Details</h3>
+      <button type="button" class="close-modal-btn" id="closeDetailBtn">&times;</button>
+    </div>
+    <div class="saas-modal-body" style="gap: 1.25rem;">
+      <div style="display: flex; gap: 1.75rem; align-items: flex-start; flex-wrap: wrap;">
+        
+        <!-- Modal Cover -->
+        <div style="width: 160px; height: 235px; border-radius: 10px; overflow: hidden; background: #1a1208; flex-shrink: 0; box-shadow: 0 8px 24px rgba(0,0,0,0.25); position: relative;">
+          <img id="modalCoverImg" src="" alt="Book Cover" style="width: 100%; height: 100%; object-fit: cover;">
+          <div id="modalCoverFallback" style="display: none; width: 100%; height: 100%; flex-direction: column; align-items: center; justify-content: center; padding: 1rem; text-align: center; color: #fff; background: linear-gradient(135deg, #2c2214, #1a1208);">
+            <span style="font-size: 2rem;">📕</span>
+            <span id="modalFallbackText" style="font-size: 0.85rem; font-weight: 700; margin-top: 0.5rem;">Title</span>
+          </div>
+        </div>
+
+        <!-- Modal Info -->
+        <div style="flex: 1; min-width: 240px;">
+          <div style="display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; margin-bottom: 0.6rem;">
+            <span class="book-cat-tag" id="modalCategory">Category</span>
+            <span style="font-size: 0.85rem; font-weight: 700; color: var(--brass);" id="modalRating">★ 4.8 / 5.0</span>
+            <span id="modalAvailabilityBadge"></span>
+          </div>
+          <h3 id="modalBookTitle" style="font-family: var(--font-serif); font-size: 1.5rem; font-weight: 700; color: var(--ink); margin-bottom: 0.25rem;"></h3>
+          <p style="font-size: 1rem; color: var(--brass); font-weight: 600; margin-bottom: 1rem;">by <span id="modalAuthor"></span></p>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; font-size: 0.82rem; color: var(--ink-soft); background: var(--ivory); padding: 0.85rem; border-radius: 8px; border: 1px solid var(--ivory-dark); margin-bottom: 1rem;">
+            <div><strong>ISBN:</strong> <span id="modalIsbn"></span></div>
+            <div><strong>Year:</strong> <span id="modalYear"></span></div>
+            <div><strong>Language:</strong> <span id="modalLanguage"></span></div>
+            <div><strong>Publisher:</strong> <span id="modalPublisher"></span></div>
+            <div><strong>Total Copies:</strong> <span id="modalTotalCopies"></span></div>
+            <div><strong>Location:</strong> <span id="modalShelf" style="color: var(--ink); font-weight: 700;"></span></div>
+          </div>
+
+          <div id="modalDescription" style="font-size: 0.9rem; color: var(--ink); line-height: 1.5; margin-bottom: 1rem;"></div>
+        </div>
+      </div>
+
+      <!-- Modal Footer Actions -->
+      <div style="display: flex; gap: 0.75rem; justify-content: space-between; align-items: center; border-top: 1px solid var(--ivory-dark); padding-top: 1.25rem;">
+        <div style="display: flex; gap: 0.5rem;">
+          <a href="#" id="modalEditLink" class="btn btn-secondary btn-sm">Edit Book</a>
+          <form id="modalDeleteForm" method="POST" action="" onsubmit="return confirm('Delete this book from database?');" style="margin: 0;">
+            <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+          </form>
+        </div>
+        <div style="display: flex; gap: 0.75rem;">
+          <button type="button" class="btn btn-secondary" id="modalCloseBtn">Close</button>
+          <a href="#" id="modalIssueBtn" class="btn btn-primary">📖 Issue This Book</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  // 1. Get live SQLite database books
+  var dbBooks = [
+    {% for b in books %}
+    {
+      id: {{ b.id }},
+      title: {{ b.title | tojson }},
+      author: {{ b.author | tojson }},
+      quantity: {{ b.quantity }}
+    }{% if not loop.last %},{% endif %}
+    {% endfor %}
+  ];
+
+  // Map of lowercase title -> SQLite ID & quantity
+  var dbTitleMap = {};
+  for (var i = 0; i < dbBooks.length; i++) {
+    dbTitleMap[dbBooks[i].title.toLowerCase().strip ? dbBooks[i].title.toLowerCase().strip() : dbBooks[i].title.toLowerCase().trim()] = dbBooks[i];
+  }
+
+  // 2. Load our 108 rich sample books from static/catalog_100.json
+  fetch('/static/catalog_100.json')
+    .then(function(res) { return res.json(); })
+    .then(function(catalog) {
+      // Merge rich catalog items with real database IDs
+      var mergedCatalog = [];
+      var seenDbIds = {};
+
+      for (var j = 0; j < catalog.length; j++) {
+        var item = catalog[j];
+        var cleanTitle = item.title.toLowerCase().trim();
+        var dbMatch = dbTitleMap[cleanTitle];
+
+        if (dbMatch) {
+          item.id = dbMatch.id;
+          item.quantity = dbMatch.quantity;
+          seenDbIds[dbMatch.id] = true;
+        } else {
+          // If not in DB map by exact title, assign dummy id or fallback
+          item.id = null;
+          item.quantity = item.total_copies || 4;
+        }
+        mergedCatalog.push(item);
+      }
+
+      // If there are any custom SQLite books not in catalog_100.json, add them cleanly
+      for (var k = 0; k < dbBooks.length; k++) {
+        var dbItem = dbBooks[k];
+        if (!seenDbIds[dbItem.id]) {
+          mergedCatalog.push({
+            id: dbItem.id,
+            isbn: "97800000" + (10000 + dbItem.id),
+            title: dbItem.title,
+            author: dbItem.author,
+            category: "Fiction",
+            cover_url: "https://covers.openlibrary.org/b/isbn/9780141182636-M.jpg",
+            year: 2024,
+            language: "English",
+            publisher: "Bookmark Library Press",
+            description: "Registered library catalogue title available for circulation and patron checkout.",
+            rating: 4.5,
+            total_copies: dbItem.quantity,
+            quantity: dbItem.quantity,
+            shelf: "Shelf A-00"
+          });
+        }
+      }
+
+      initializeCatalogue(mergedCatalog);
+    })
+    .catch(function(err) {
+      console.error("Failed loading catalog_100.json:", err);
+      // Fallback to purely DB books if JSON fetch fails
+      var fallbackList = dbBooks.map(function(b) {
+        return {
+          id: b.id,
+          isbn: "ISBN-" + b.id,
+          title: b.title,
+          author: b.author,
+          category: "General",
+          cover_url: "",
+          year: 2024,
+          language: "English",
+          publisher: "Library",
+          description: "Catalogue item.",
+          rating: 4.5,
+          total_copies: b.quantity,
+          quantity: b.quantity,
+          shelf: "Shelf A-01"
+        };
+      });
+      initializeCatalogue(fallbackList);
+    });
+
+  function initializeCatalogue(allBooks) {
+    // Populate Author Filter options dynamically
+    var authorSelect = document.getElementById('filterAuthor');
+    var authorSet = {};
+    for (var a = 0; a < allBooks.length; a++) {
+      if (allBooks[a].author) authorSet[allBooks[a].author.trim()] = true;
+    }
+    var authorsSorted = Object.keys(authorSet).sort();
+    for (var b = 0; b < authorsSorted.length; b++) {
+      var opt = document.createElement('option');
+      opt.value = authorsSorted[b];
+      opt.textContent = authorsSorted[b];
+      authorSelect.appendChild(opt);
+    }
+
+    // Controls DOM references
+    var searchInput = document.getElementById('searchInput');
+    var sortSelect = document.getElementById('sortSelect');
+    var catSelect = document.getElementById('filterCategory');
+    var langSelect = document.getElementById('filterLanguage');
+    var yearSelect = document.getElementById('filterYear');
+    var availSelect = document.getElementById('filterAvailability');
+    var ratingSelect = document.getElementById('filterRating');
+    var resetBtn = document.getElementById('resetFiltersBtn');
+    var grid = document.getElementById('bookCardGrid');
+    var summaryText = document.getElementById('resultsSummaryText');
+
+    function renderCards() {
+      var q = searchInput.value.toLowerCase().trim();
+      var sort = sortSelect.value;
+      var cat = catSelect.value;
+      var author = authorSelect.value;
+      var lang = langSelect.value;
+      var year = yearSelect.value;
+      var avail = availSelect.value;
+      var rating = ratingSelect.value;
+
+      // 1. Filter
+      var filtered = allBooks.filter(function(item) {
+        // Search query across Title, Author, ISBN, Category
+        if (q) {
+          var matchTitle = item.title.toLowerCase().indexOf(q) !== -1;
+          var matchAuthor = item.author.toLowerCase().indexOf(q) !== -1;
+          var matchIsbn = item.isbn && item.isbn.toLowerCase().indexOf(q) !== -1;
+          var matchCat = item.category.toLowerCase().indexOf(q) !== -1;
+          if (!matchTitle && !matchAuthor && !matchIsbn && !matchCat) return false;
+        }
+        // Category
+        if (cat !== 'All' && item.category !== cat) return false;
+        // Author
+        if (author !== 'All' && item.author.trim() !== author) return false;
+        // Language
+        if (lang !== 'All' && item.language !== lang) return false;
+        // Year
+        if (year !== 'All') {
+          var y = item.year || 2000;
+          if (year === 'before1950' && y >= 1950) return false;
+          if (year === '1950-1999' && (y < 1950 || y > 1999)) return false;
+          if (year === '2000-2019' && (y < 2000 || y > 2019)) return false;
+          if (year === '2020plus' && y < 2020) return false;
+        }
+        // Availability
+        if (avail !== 'All') {
+          var isAvail = item.quantity > 0;
+          if (avail === 'Available' && !isAvail) return false;
+          if (avail === 'Issued' && isAvail) return false;
+        }
+        // Rating
+        if (rating !== 'All') {
+          var minR = parseFloat(rating);
+          if ((item.rating || 4.0) < minR) return false;
+        }
+        return true;
+      });
+
+      // 2. Sort
+      filtered.sort(function(a, b) {
+        if (sort === 'az') return a.title.localeCompare(b.title);
+        if (sort === 'za') return b.title.localeCompare(a.title);
+        if (sort === 'newest') return (b.year || 0) - (a.year || 0);
+        if (sort === 'oldest') return (a.year || 0) - (b.year || 0);
+        if (sort === 'rating') return (b.rating || 0) - (a.rating || 0);
+        if (sort === 'popular') return (b.total_copies || 0) - (a.total_copies || 0);
+        return 0;
+      });
+
+      // 3. Render
+      grid.innerHTML = '';
+      summaryText.textContent = 'Showing ' + filtered.length + ' of ' + allBooks.length + ' books';
+
+      if (filtered.length === 0) {
+        grid.innerHTML = '<div style="grid-column: 1/-1; padding: 4rem; text-align: center; background: var(--ivory-mid); border-radius: 14px; border: 1.5px dashed var(--ivory-dark);">' +
+          '<div style="font-size: 2.5rem; margin-bottom: 0.5rem;">🔍</div>' +
+          '<h3 style="font-family: var(--font-serif); font-size: 1.3rem; margin-bottom: 0.4rem; color: var(--ink);">No Books Found</h3>' +
+          '<p style="color: var(--ink-soft); font-size: 0.9rem;">Try broadening your search or resetting your filter criteria.</p>' +
+        '</div>';
+        return;
+      }
+
+      for (var c = 0; c < filtered.length; c++) {
+        var book = filtered[c];
+        var isAvail = book.quantity > 0;
+        var badgeHtml = isAvail
+          ? '<span class="badge badge-success" style="font-size: 0.73rem; padding: 0.22rem 0.6rem;">Available (' + book.quantity + ')</span>'
+          : '<span class="badge badge-danger" style="font-size: 0.73rem; padding: 0.22rem 0.6rem;">Out of Stock</span>';
+
+        var card = document.createElement('div');
+        card.className = 'book-browse-card';
+        card.style.display = 'flex';
+        card.style.flexDirection = 'column';
+
+        card.innerHTML = 
+          '<div style="height: 230px; overflow: hidden; position: relative; border-bottom: 1px solid var(--ivory-dark); background: #1a1208; display: flex; align-items: center; justify-content: center;">' +
+            '<img src="' + book.cover_url + '" alt="' + book.title + '" ' +
+                 'onerror="this.style.display=\'none\'; this.nextElementSibling.style.display=\'flex\';" ' +
+                 'style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);">' +
+            '<div style="display: none; width: 100%; height: 100%; flex-direction: column; align-items: center; justify-content: center; padding: 1.25rem; text-align: center; color: #fff; background: linear-gradient(135deg, #2c2214, #1a1208);">' +
+              '<span style="font-size: 2.2rem; margin-bottom: 0.3rem;">📕</span>' +
+              '<span style="font-family: var(--font-serif); font-weight: 700; font-size: 1.05rem; line-height: 1.3;">' + book.title + '</span>' +
+            '</div>' +
+          '</div>' +
+          '<div style="padding: 1.25rem; display: flex; flex-direction: column; justify-content: space-between; flex: 1;">' +
+            '<div>' +
+              '<div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.6rem;">' +
+                '<span class="book-cat-tag">#' + book.category + '</span>' +
+                '<span style="font-size: 0.84rem; font-weight: 700; color: var(--brass);">★ ' + book.rating + '</span>' +
+              '</div>' +
+              '<h3 style="font-family: var(--font-serif); font-size: 1.15rem; font-weight: 700; margin-bottom: 0.2rem; color: var(--ink); line-height: 1.3;">' + book.title + '</h3>' +
+              '<p style="font-size: 0.85rem; color: var(--brass); margin-bottom: 0.75rem; font-weight: 600;">by ' + book.author + '</p>' +
+              '<div style="display: flex; justify-content: space-between; font-size: 0.78rem; color: var(--ink-soft); margin-bottom: 0.85rem; background: var(--ivory); padding: 0.45rem 0.65rem; border-radius: 6px; border: 1px solid var(--ivory-dark);">' +
+                '<span>📅 ' + book.year + '</span>' +
+                '<span>📍 ' + book.shelf + '</span>' +
+              '</div>' +
+              '<div style="margin-bottom: 1.1rem;">' + badgeHtml + '</div>' +
+            '</div>' +
+            '<div style="display: flex; gap: 0.6rem;">' +
+              '<button type="button" class="btn btn-secondary btn-sm view-details-btn" style="flex: 1; text-align: center;">View Details</button>' +
+              '<a href="/issue' + (book.id ? '?book_id=' + book.id : '') + '" class="btn btn-primary btn-sm" style="flex: 1; text-align: center; ' + (isAvail ? '' : 'pointer-events: none; opacity: 0.5;') + '">📖 Issue Book</a>' +
+            '</div>' +
+          '</div>';
+
+        // Hover zoom effect on cover img
+        var imgEl = card.querySelector('img');
+        if (imgEl) {
+          card.addEventListener('mouseenter', function() { imgEl.style.transform = 'scale(1.06)'; });
+          card.addEventListener('mouseleave', function() { imgEl.style.transform = 'scale(1.0)'; });
+        }
+
+        (function(itemData) {
+          var vBtn = card.querySelector('.view-details-btn');
+          vBtn.addEventListener('click', function() { openModal(itemData); });
+        })(book);
+
+        grid.appendChild(card);
+      }
+    }
+
+    // Attach event listeners
+    searchInput.addEventListener('input', renderCards);
+    sortSelect.addEventListener('change', renderCards);
+    catSelect.addEventListener('change', renderCards);
+    authorSelect.addEventListener('change', renderCards);
+    langSelect.addEventListener('change', renderCards);
+    yearSelect.addEventListener('change', renderCards);
+    availSelect.addEventListener('change', renderCards);
+    ratingSelect.addEventListener('change', renderCards);
+
+    resetBtn.addEventListener('click', function() {
+      searchInput.value = '';
+      sortSelect.value = 'az';
+      catSelect.value = 'All';
+      authorSelect.value = 'All';
+      langSelect.value = 'All';
+      yearSelect.value = 'All';
+      availSelect.value = 'All';
+      ratingSelect.value = 'All';
+      renderCards();
+    });
+
+    // Check initial URL query params if linked from elsewhere (?category=Fiction)
+    var params = new URLSearchParams(window.location.search);
+    if (params.get('category')) {
+      var urlCat = params.get('category');
+      // Set value if exists in select
+      for (var o = 0; o < catSelect.options.length; o++) {
+        if (catSelect.options[o].value === urlCat) {
+          catSelect.value = urlCat;
+          break;
+        }
+      }
+    }
+
+    renderCards();
+  }
+
+  // Modal handlers
+  var modal = document.getElementById('bookDetailModal');
+  var closeBtn1 = document.getElementById('closeDetailBtn');
+  var closeBtn2 = document.getElementById('modalCloseBtn');
+
+  function openModal(book) {
+    if (!modal) return;
+    document.getElementById('modalTitle').textContent = book.title;
+    document.getElementById('modalBookTitle').textContent = book.title;
+    document.getElementById('modalAuthor').textContent = book.author;
+    document.getElementById('modalCategory').textContent = book.category;
+    document.getElementById('modalRating').textContent = '★ ' + book.rating + ' / 5.0';
+    document.getElementById('modalIsbn').textContent = book.isbn || 'N/A';
+    document.getElementById('modalYear').textContent = book.year || '2024';
+    document.getElementById('modalLanguage').textContent = book.language || 'English';
+    document.getElementById('modalPublisher').textContent = book.publisher || 'Bookmark Press';
+    document.getElementById('modalTotalCopies').textContent = book.total_copies || book.quantity;
+    document.getElementById('modalShelf').textContent = book.shelf || 'Shelf A-01';
+    document.getElementById('modalDescription').textContent = book.description;
+
+    var coverImg = document.getElementById('modalCoverImg');
+    var fallback = document.getElementById('modalCoverFallback');
+    if (coverImg && fallback) {
+      coverImg.style.display = 'block';
+      fallback.style.display = 'none';
+      coverImg.src = book.cover_url;
+      coverImg.onerror = function() {
+        coverImg.style.display = 'none';
+        fallback.style.display = 'flex';
+        document.getElementById('modalFallbackText').textContent = book.title;
+      };
+    }
+
+    var badgeEl = document.getElementById('modalAvailabilityBadge');
+    if (badgeEl) {
+      badgeEl.innerHTML = book.quantity > 0
+        ? '<span class="badge badge-success" style="font-size: 0.78rem;">Available (' + book.quantity + ' copies)</span>'
+        : '<span class="badge badge-danger" style="font-size: 0.78rem;">Out of Stock</span>';
+    }
+
+    var issueBtn = document.getElementById('modalIssueBtn');
+    if (issueBtn) {
+      if (book.id && book.quantity > 0) {
+        issueBtn.href = '/issue?book_id=' + book.id;
+        issueBtn.style.display = 'inline-flex';
+      } else {
+        issueBtn.href = '/issue';
+        issueBtn.style.display = 'inline-flex';
+      }
+    }
+
+    var editLink = document.getElementById('modalEditLink');
+    var delForm = document.getElementById('modalDeleteForm');
+    if (book.id) {
+      if (editLink) { editLink.href = '/books/edit/' + book.id; editLink.style.display = 'inline-flex'; }
+      if (delForm) { delForm.action = '/books/delete/' + book.id; delForm.style.display = 'inline-block'; }
+    } else {
+      if (editLink) editLink.style.display = 'none';
+      if (delForm) delForm.style.display = 'none';
+    }
+
+    modal.style.display = 'flex';
+  }
+
+  function closeDetailModal() {
+    if (modal) modal.style.display = 'none';
+  }
+
+  if (closeBtn1) closeBtn1.addEventListener('click', closeDetailModal);
+  if (closeBtn2) closeBtn2.addEventListener('click', closeDetailModal);
+  if (modal) {
+    modal.addEventListener('click', function(e) {
+      if (e.target === modal) closeDetailModal();
+    });
+  }
+})();
+</script>
+{% endblock %}

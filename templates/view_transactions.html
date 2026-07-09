@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+{% block title %}Transaction History — Bookmark{% endblock %}
+
+{% block content %}
+<div class="page-wrapper">
+
+  <div class="page-header">
+    <div class="page-header-row">
+      <div>
+        <h1>Transaction History</h1>
+        <p>Complete record of all book issues and returns</p>
+      </div>
+      <div style="display:flex;gap:.5rem;align-items:center;">
+        <a href="{{ url_for('issue_book') }}"  class="btn btn-info btn-sm">Issue</a>
+        <a href="{{ url_for('return_book') }}" class="btn btn-success btn-sm">Return</a>
+        {% if transactions %}
+        <button type="button" class="btn btn-danger btn-sm" id="clearHistoryBtn">
+          Clear All History
+        </button>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  {% if transactions %}
+  <div class="card">
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Book</th>
+            <th>Member</th>
+            <th>Issue Date</th>
+            <th>Return Date</th>
+            <th>Status</th>
+            <th>Fine (₹)</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for t in transactions %}
+          <tr>
+            <td>{{ t.id }}</td>
+            <td>{{ t.title }}</td>
+            <td>{{ t.name }}</td>
+            <td>{{ t.issue_date }}</td>
+            <td>{{ t.return_date or '—' }}</td>
+            <td>
+              {% if t.status == 'issued' %}
+                <span class="badge badge-warning">Issued</span>
+              {% else %}
+                <span class="badge badge-success">Returned</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if t.overdue_days > 0 %}
+                <span style="color:var(--rust);font-weight:600;">₹{{ t.overdue_days * 5 }}</span>
+              {% else %}
+                <span style="color:#888;">—</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if t.status == 'issued' %}
+                {% set confirm_msg = 'Delete this transaction record? The book copy will be restored to the shelf.' %}
+              {% else %}
+                {% set confirm_msg = 'Delete this transaction record?' %}
+              {% endif %}
+              <form method="POST"
+                    action="{{ url_for('delete_transaction', txn_id=t.id) }}"
+                    onsubmit="return confirm('{{ confirm_msg }}');"
+                    style="margin:0;">
+                <button type="submit" class="btn btn-danger btn-sm"
+                        style="padding:.2rem .55rem;font-size:.75rem;">
+                  Delete
+                </button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <p style="margin-top:.75rem;font-size:.82rem;color:#888;">{{ transactions|length }} transaction(s) total</p>
+
+  {% else %}
+  <div class="empty-state">
+    <div class="empty-state-icon">🗒️</div>
+    <h3>No transactions yet</h3>
+    <p>Issue a book to create your first transaction.</p>
+    <a href="{{ url_for('issue_book') }}" class="btn btn-primary">Issue a Book</a>
+  </div>
+  {% endif %}
+
+</div>
+
+<!-- Clear All History confirmation modal -->
+<div id="clearModal" style="
+  display:none;position:fixed;inset:0;z-index:1000;
+  background:rgba(0,0,0,.55);backdrop-filter:blur(3px);
+  align-items:center;justify-content:center;">
+  <div style="
+    background:var(--surface,#1e1e2e);border:1px solid rgba(255,255,255,.1);
+    border-radius:1rem;padding:2rem;max-width:420px;width:90%;
+    box-shadow:0 20px 60px rgba(0,0,0,.5);animation:modalIn .2s ease;">
+    <h3 style="margin:0 0 .5rem;color:var(--danger,#e05252);">Clear All History?</h3>
+    <p style="color:#aaa;font-size:.9rem;margin:0 0 1.5rem;">
+      This will permanently delete <strong>all</strong> transaction records —
+      both issued and returned. Book quantities will be automatically restored
+      for any currently issued copies.
+    </p>
+    <div style="display:flex;gap:.75rem;justify-content:flex-end;">
+      <button id="cancelClear" class="btn btn-sm"
+              style="background:rgba(255,255,255,.08);color:#ccc;">
+        Cancel
+      </button>
+      <form method="POST" action="{{ url_for('clear_history') }}" style="margin:0;">
+        <button type="submit" class="btn btn-danger btn-sm">Yes, Clear History</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<style>
+@keyframes modalIn {
+  from { opacity:0; transform:scale(.94); }
+  to   { opacity:1; transform:scale(1);  }
+}
+</style>
+
+<script>
+  const modal      = document.getElementById('clearModal');
+  const openBtn    = document.getElementById('clearHistoryBtn');
+  const cancelBtn  = document.getElementById('cancelClear');
+
+  if (openBtn) {
+    openBtn.addEventListener('click', () => {
+      modal.style.display = 'flex';
+    });
+  }
+  if (cancelBtn) {
+    cancelBtn.addEventListener('click', () => {
+      modal.style.display = 'none';
+    });
+  }
+  // Close on backdrop click
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) modal.style.display = 'none';
+  });
+</script>
+{% endblock %}

@@ -1,0 +1,290 @@
+{% extends "base.html" %}
+{% block title %}Issue Book — Bookmark{% endblock %}
+
+{% block content %}
+<div class="page-wrapper">
+
+  <div class="page-header">
+    <h1>Issue a Book</h1>
+    <p>Select an available book and a member to issue it to.</p>
+  </div>
+
+  {% if members %}
+  <div class="card form-card">
+    <div class="card-header">
+      <h2>📤 Issue Details</h2>
+    </div>
+    <div class="card-body">
+      <form method="POST" action="{{ url_for('issue_book') }}" id="issueForm">
+        <div class="form-grid">
+
+          <!-- Book autocomplete -->
+          <div class="form-group">
+            <label for="book_search">Select Book *</label>
+            <div class="autocomplete-wrap" id="bookAutocomplete">
+              <input
+                type="text"
+                id="book_search"
+                autocomplete="off"
+                placeholder="Start typing a book title or author…"
+                required
+              >
+              <input type="hidden" id="book_id" name="book_id">
+              <ul class="ac-dropdown" id="acDropdown" role="listbox"></ul>
+            </div>
+            <span class="form-hint" id="bookHint">Type at least 1 character to see suggestions.</span>
+          </div>
+
+          <div class="form-group">
+            <label for="member_id">Select Member *</label>
+            <select id="member_id" name="member_id" required>
+              <option value="" disabled selected>— Choose a member —</option>
+              {% for m in members %}
+              <option value="{{ m.id }}">{{ m.name }} &lt;{{ m.email }}&gt;</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Issue Date</label>
+            <input type="text" value="{{ today }}" disabled style="background:#f5f5f5;color:#888;">
+            <span class="form-hint">Issue date is automatically set to today.</span>
+          </div>
+
+          <div style="background:var(--ivory-mid);border:1px solid var(--ivory-dark);border-radius:6px;padding:1rem;font-size:.85rem;color:var(--ink-soft);">
+            📌 <strong>Policy:</strong> Books must be returned within <strong>14 days</strong>.
+            A fine of <strong>Rs.5/day</strong> applies for late returns.
+          </div>
+
+          <div style="display:flex;gap:.75rem;flex-wrap:wrap;margin-top:.5rem;">
+            <button type="submit" class="btn btn-info" id="issueBtn" disabled>📤 Issue Book</button>
+            <a href="{{ url_for('index') }}" class="btn btn-secondary">Cancel</a>
+          </div>
+
+        </div>
+      </form>
+    </div>
+  </div>
+
+  {% else %}
+  <div class="empty-state">
+    <div class="empty-state-icon">👤</div>
+    <h3>No members registered</h3>
+    <p>Register a member before issuing books.</p>
+    <a href="{{ url_for('register_member') }}" class="btn btn-primary">Register Member</a>
+  </div>
+  {% endif %}
+
+</div>
+
+<style>
+/* ── Autocomplete ── */
+.autocomplete-wrap {
+  position: relative;
+}
+.autocomplete-wrap input[type="text"] {
+  width: 100%;
+}
+.ac-dropdown {
+  display: none;
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0; right: 0;
+  background: #fff;
+  border: 1.5px solid var(--brass);
+  border-radius: var(--radius);
+  box-shadow: 0 8px 24px rgba(26,18,8,.14);
+  list-style: none;
+  margin: 0; padding: 0;
+  z-index: 500;
+  max-height: 260px;
+  overflow-y: auto;
+}
+.ac-dropdown.open { display: block; }
+.ac-item {
+  padding: .65rem 1rem;
+  cursor: pointer;
+  border-bottom: 1px solid var(--ivory-mid);
+  transition: background .12s;
+}
+.ac-item:last-child { border-bottom: none; }
+.ac-item:hover, .ac-item.active {
+  background: var(--ivory-mid);
+}
+.ac-item-title {
+  font-weight: 600;
+  color: var(--ink);
+  font-size: .9rem;
+}
+.ac-item-meta {
+  font-size: .78rem;
+  color: var(--ink-soft);
+  margin-top: .1rem;
+}
+.ac-badge-avail  { color: var(--sage); font-weight: 700; }
+.ac-badge-none   { color: var(--rust); font-weight: 700; }
+.ac-empty {
+  padding: .75rem 1rem;
+  color: #999;
+  font-size: .85rem;
+  font-style: italic;
+}
+.ac-highlight { background: rgba(184,134,11,.18); border-radius: 2px; }
+</style>
+
+<script>
+(function () {
+  const searchInput = document.getElementById('book_search');
+  const hiddenId    = document.getElementById('book_id');
+  const dropdown    = document.getElementById('acDropdown');
+  const hint        = document.getElementById('bookHint');
+  const issueBtn    = document.getElementById('issueBtn');
+  const form        = document.getElementById('issueForm');
+
+  let activeIndex = -1;
+  let results     = [];
+  let debounceTimer;
+
+  function highlight(text, query) {
+    if (!query) return text;
+    const re = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+    return text.replace(re, '<mark class="ac-highlight">$1</mark>');
+  }
+
+  function renderDropdown(items, query) {
+    dropdown.innerHTML = '';
+    activeIndex = -1;
+    if (!items.length) {
+      dropdown.innerHTML = '<li class="ac-empty">No books found matching your search.</li>';
+      dropdown.classList.add('open');
+      return;
+    }
+    items.forEach((book, i) => {
+      const li = document.createElement('li');
+      li.className = 'ac-item';
+      li.setAttribute('role', 'option');
+      li.dataset.id    = book.id;
+      li.dataset.title = book.title;
+      const availLabel = book.quantity > 0
+        ? `<span class="ac-badge-avail">${book.quantity} available</span>`
+        : `<span class="ac-badge-none">Out of stock</span>`;
+      li.innerHTML = `
+        <div class="ac-item-title">${highlight(book.title, query)}</div>
+        <div class="ac-item-meta">by ${highlight(book.author, query)} &nbsp;·&nbsp; ${availLabel}</div>
+      `;
+      li.addEventListener('mousedown', (e) => {
+        e.preventDefault();
+        selectBook(book);
+      });
+      dropdown.appendChild(li);
+    });
+    dropdown.classList.add('open');
+  }
+
+  function selectBook(book) {
+    searchInput.value = book.title;
+    hiddenId.value    = book.id;
+    dropdown.classList.remove('open');
+    if (book.quantity > 0) {
+      issueBtn.disabled = false;
+      hint.textContent  = `${book.quantity} cop${book.quantity === 1 ? 'y' : 'ies'} available.`;
+      hint.style.color  = 'var(--sage)';
+    } else {
+      issueBtn.disabled = true;
+      hint.textContent  = 'This book is out of stock and cannot be issued.';
+      hint.style.color  = 'var(--rust)';
+    }
+  }
+
+  function fetchBooks(q) {
+    fetch(`/api/books/search?q=${encodeURIComponent(q)}`)
+      .then(r => r.json())
+      .then(data => {
+        results = data;
+        renderDropdown(data, q);
+      })
+      .catch(() => {
+        dropdown.innerHTML = '<li class="ac-empty">Error loading suggestions.</li>';
+        dropdown.classList.add('open');
+      });
+  }
+
+  searchInput.addEventListener('input', () => {
+    const q = searchInput.value.trim();
+    hiddenId.value    = '';
+    issueBtn.disabled = true;
+    hint.style.color  = '';
+    hint.textContent  = 'Type at least 1 character to see suggestions.';
+
+    clearTimeout(debounceTimer);
+    if (q.length === 0) {
+      dropdown.classList.remove('open');
+      return;
+    }
+    debounceTimer = setTimeout(() => fetchBooks(q), 200);
+  });
+
+  searchInput.addEventListener('focus', () => {
+    if (searchInput.value.trim().length > 0 && !hiddenId.value) {
+      fetchBooks(searchInput.value.trim());
+    }
+  });
+
+  searchInput.addEventListener('keydown', (e) => {
+    const items = dropdown.querySelectorAll('.ac-item');
+    if (!dropdown.classList.contains('open') || !items.length) return;
+
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      activeIndex = Math.min(activeIndex + 1, items.length - 1);
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      activeIndex = Math.max(activeIndex - 1, 0);
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      if (activeIndex >= 0 && items[activeIndex]) {
+        const book = results[activeIndex];
+        selectBook(book);
+      }
+      return;
+    } else if (e.key === 'Escape') {
+      dropdown.classList.remove('open');
+      return;
+    }
+    items.forEach((el, i) => el.classList.toggle('active', i === activeIndex));
+    if (items[activeIndex]) items[activeIndex].scrollIntoView({ block: 'nearest' });
+  });
+
+  document.addEventListener('click', (e) => {
+    if (!document.getElementById('bookAutocomplete').contains(e.target)) {
+      dropdown.classList.remove('open');
+    }
+  });
+
+  // Auto-select book if passed via URL parameter (?book_id=123)
+  const urlParams = new URLSearchParams(window.location.search);
+  const paramBookId = urlParams.get('book_id');
+  if (paramBookId) {
+    fetch(`/api/books/search`)
+      .then(r => r.json())
+      .then(data => {
+        const found = data.find(b => String(b.id) === String(paramBookId));
+        if (found) {
+          selectBook(found);
+        }
+      })
+      .catch(err => console.error("Could not auto-select book:", err));
+  }
+
+  // Prevent form submission if no book selected
+  form.addEventListener('submit', (e) => {
+    if (!hiddenId.value) {
+      e.preventDefault();
+      searchInput.focus();
+      hint.textContent = 'Please select a book from the suggestions.';
+      hint.style.color = 'var(--rust)';
+    }
+  });
+})();
+</script>
+{% endblock %}
